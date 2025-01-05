@@ -1,130 +1,211 @@
 #include "raycast.h"
 
-/* color to bit pattern */
-Uint32 ctob(const Uint32 r, const Uint32 g, const Uint32 b, const Uint32 a) {
 
-	/* https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.cpp */
+Uint8 isExitClicked, isESCPressed;
+static Uint8 position_buffer[SCREEN_BUF_SIZE];
 
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-	return a << 24 | b << 16 | g << 8 | r;
-#else
-	/* little endian */
-	return r << 24 | g << 16 | b << 8 | a;
-#endif
+static Uint32 framebuffer[SCREEN_BUF_SIZE];
+
+static double g_player_pos_s = 20., g_player_pos_t = 25., g_player_yaw;
+
+static double g_dir_s = 1., g_dir_t;
+
+static double g_cam_plane_s, g_cam_plane_t = 1.;
+
+
+SDL_Window* g_window;
+SDL_Renderer* g_renderer;
+SDL_Texture* g_texture;
+
+
+void createWindow(void) {
+
+	// https://wiki.libsdl.org/SDL3/SDL_CreateWindow
+	SDL_Init(SDL_INIT_VIDEO);
+
+	if ((g_window = SDL_CreateWindow(
+		"Raycaster",
+		SCREEN_WIDTH, SCREEN_HEIGHT,
+		0
+	)) == NULL) {
+		
+		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "createWindow(): failed to create window\n%s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+		
+	}
+
+	if ((g_renderer = SDL_CreateRenderer(g_window, NULL)) == NULL) {
+		
+		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "createWindow(): failed to create renderer\n%s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+		
+	}
+	
+	if (!SDL_SetRenderDrawColor(g_renderer, 127u, 127u, 127u, 255u)) {
+		
+		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "createWindow(): failed to set render draw color\n%s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+		
+	}
+	
+	if ((g_texture = SDL_CreateTexture(
+		g_renderer,
+		SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
+		SCREEN_WIDTH, SCREEN_WIDTH
+	)) == NULL) {
+		
+		fprintf(stderr, "createWindow(): failed to create texture\n%s\n", SDL_GetError());
+		exit(EXIT_FAILURE);
+		
+	}
 	
 }
 
+void quitRaycaster(void) {
+	
+	SDL_DestroyTexture(g_texture);
+	SDL_DestroyWindow(g_window);
+	SDL_Quit();
+	
+}
+
+/* color to bit pattern */
+Uint32 ctob(const Uint32 r, const Uint32 g, const Uint32 b, const Uint32 a) {
+	
+	/* https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.cpp */
+	
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+
+	return a << 24 | b << 16 | g << 8 | r;
+	
+#else
+	
+	return r << 24 | g << 16 | b << 8 | a;
+
+#endif
+
+}
 
 /* bit pattern to color */
 void btoc(const Uint32 color, Uint8* const r,  Uint8* const g, Uint8* const b, Uint8* const a) {
 	
 	assert(r != NULL && g != NULL && b != NULL && a != NULL);
 	
-    // red green blue alpha
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+
     *a = color >> 24;
-    *b = (color >> 16) & 255;
-    *g = (color >> 8) & 255;
+    *b = color >> 16 & 255;
+    *g = color >> 8 & 255;
     *r = color & 255;
+	
 #else
-	/* little endian */
+	
 	*r = color >> 24;
-    *g = (color >> 16) & 255;
-    *b = (color >> 8) & 255;
+    *g = color >> 16 & 255;
+    *b = color >> 8 & 255;
     *a = color & 255;
+	
 #endif
+
 }
 
 
-void swapBuffersPPM(Uint32* bufPtr, const size_t bufHeight, const size_t bufWidth) {
+void handleEvent(void) {
 	
-	assert(bufPtr != NULL);
-	
-	FILE* imageFile = NULL;
-    fopen_s(&imageFile, "image.ppm", "w");
-	
-	fprintf(imageFile, "P3\n%zu %zu\n255\n", bufWidth, bufHeight);
+	SDL_Event event;
 
-	size_t i, j;
-	for (i = 0; i < bufHeight; i++) {
+	while (SDL_PollEvent(&event)) {
 		
-		for (j = 0; j < bufWidth; j++) {
-			
-			Uint8 red, green, blue, alpha;
-			btoc(bufPtr[i * bufWidth + j], &red, &green, &blue, &alpha);
-			fprintf(imageFile, "%d %d %d\n", red, green, blue);
-			
-		}
-	}
-	
-	fclose(imageFile);
+		isExitClicked = (SDL_EVENT_QUIT == event.type) ? 1u : 0u;
 
-}
-
-void swapBuffersWindow(SDL_Renderer* renderer, SDL_Texture* texture, Uint32* bufPtr, const size_t bufHeight, const size_t bufWidth) {
-	
-	assert(renderer != NULL && texture != NULL && bufPtr != NULL);
-	
-	/* https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.hpp */
-	/* https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.cpp */
-	
-	/* https://www.youtube.com/watch?v=rB8N5cFCHLQ */
-	
-	
-	/* https://wiki.libsdl.org/SDL3/SDL_UpdateTexture */
-	SDL_UpdateTexture(texture, NULL, (void*)bufPtr, bufWidth * sizeof(Uint32));
-	
-	/* https://wiki.libsdl.org/SDL3/SDL_RenderTexture */
-	SDL_FRect srcrect, dstrect;
-	srcrect.x = dstrect.x = 0.f;
-	srcrect.y = dstrect.y = 0.f;
-	srcrect.w = dstrect.w = (float)bufWidth;
-	srcrect.h = dstrect.h = (float)bufHeight;
-	
-	SDL_RenderTexture(renderer, texture, &srcrect, &dstrect);
-
-}
-
-
-void drawMap(Uint32* const frameBufPtr, Uint8* const posBufPtr, const size_t bufHeight, const size_t bufWidth, Uint8* const mapPtr, const size_t mapHeight, const size_t mapWidth) {
-
-	assert(frameBufPtr != NULL && posBufPtr != NULL);
-	assert(bufHeight >= mapHeight & bufWidth >= mapWidth);
-	assert(bufHeight % mapHeight == 0 && bufWidth % mapWidth == 0);
-	
-	double invMapHeight = 1.f / mapHeight;
-	double invMapWidth = 1.f / mapWidth;
-	
-	Uint32 wallColor = ctob(0u, 0u, 127u, 255u);
-
-	/* size_t dHB = bufHeight * invMapHeight; */
-	/* size_t dWB = bufWidth * invMapWidth; */
-	
-	size_t i, j;
-	for (i = 0; i < mapHeight; i++) {
-			
-		for (j = 0; j < mapWidth; j++) {
+		/* https://wiki.libsdl.org/SDL3/BestKeyboardPractices */
+		isESCPressed = (SDL_EVENT_KEY_DOWN == event.type && event.key.key == SDLK_ESCAPE) ? 2u : 0u;
 		
-			if (mapPtr[i * mapWidth + j] == 0) continue;
+		if (SDL_EVENT_KEY_DOWN == event.type) {
+		
+			if (event.key.key == SDLK_W) {
 				
-			size_t verticalEnd = (i + 1) * invMapHeight * bufHeight;
-			size_t horizontalEnd = (j + 1) * invMapWidth * bufWidth;
+				g_player_pos_s += g_dir_s;
+				g_player_pos_t += g_dir_t;
+				
+			} else if (event.key.key == SDLK_S) {
 			
-			size_t dHM, dWM;
+				g_player_pos_s -= g_dir_s;
+				g_player_pos_t -= g_dir_t;
 			
-			for (dHM = i * invMapHeight * bufHeight; dHM < verticalEnd; dHM++) {
+			} else if (event.key.key == SDLK_A) {
+				
+				double horz_vec_s, horz_vec_t;
+				getHorizontalVector(&horz_vec_s, &horz_vec_t);
+			
+				g_player_pos_s += horz_vec_s;
+				g_player_pos_t += horz_vec_t;
+			
+			} else if (event.key.key == SDLK_D) {
+				
+				double horz_vec_s, horz_vec_t;
+				getHorizontalVector(&horz_vec_s, &horz_vec_t);
+			
+				g_player_pos_s -= horz_vec_s;
+				g_player_pos_t -= horz_vec_t;
+			
+			} else if (event.key.key == SDLK_LEFT) {
+			
+				g_player_yaw -= 1.;
+				if (g_player_yaw < 0.) g_player_yaw += 360.;
+				lookAt(DEGREE_TO_RADIAN(g_player_yaw));
+				
+			} else if (event.key.key == SDLK_RIGHT) {
+				 
+				g_player_yaw += 1.;
+				if (g_player_yaw > 360.) g_player_yaw -= 360.;
+				lookAt(DEGREE_TO_RADIAN(g_player_yaw));
+				
+			}
+		
+		}
+		
+	}	
+	
+}
+
+void fillBackground(void) {
+	
+	size_t i = 0, j;
+	for (; i < SCREEN_HEIGHT; i++)
+		for (j = 0; j < SCREEN_WIDTH; j++)
+			framebuffer[i * SCREEN_WIDTH + j] = ctob((Uint32)i, (Uint32)j, 0u, 255u);
+	
+}
+
+void drawMap(const Uint8* const p_map, const size_t map_height, const size_t map_width) {
+	
+	const Uint32 color_wall = ctob(0u, 0u, 127u, 255u);
+	
+	const double inv_map_height = 1.f / map_height;
+	const double inv_map_width = 1.f / map_width;
+	
+	size_t i = 0, j;
+	
+	for (; i < map_height; i++) {
+			
+		for (j = 0; j < map_width; j++) {
+		
+			if (p_map[i * map_width + j] == 0) continue;
+				
+			const size_t vert_end = (i + 1) * inv_map_height * SCREEN_HEIGHT;
+			const size_t horz_end = (j + 1) * inv_map_width * SCREEN_WIDTH;
+			
+			size_t dHM = i * inv_map_height * SCREEN_HEIGHT, dWM;
+			
+			for (; dHM < vert_end; dHM++) {
 					
-				for (dWM = j * invMapWidth * bufWidth; dWM < horizontalEnd; dWM++) {
+				for (dWM = j * inv_map_width * SCREEN_WIDTH; dWM < horz_end; dWM++) {
 					
-					frameBufPtr[dHM * bufWidth + dWM] = wallColor;
+					const size_t buffer_pixel_index = dHM * SCREEN_WIDTH + dWM;
 					
-					if (posBufPtr == NULL) {
-						fprintf(stderr, "drawMap(): warning: posBufPtr is NULL\n");
-						continue;
-					}
-					
-					posBufPtr[dHM * bufWidth + dWM] = 1u;
-					/* fprintf(stderr, "drawMap(): posBufPtr[dHM * bufWidth + dWM] = %d\n", posBufPtr[dHM * bufWidth + dWM]); */
+					framebuffer[buffer_pixel_index] = color_wall;
+					position_buffer[buffer_pixel_index] = 1u;
 					
 				}
 				
@@ -136,223 +217,153 @@ void drawMap(Uint32* const frameBufPtr, Uint8* const posBufPtr, const size_t buf
 	
 }
 
-/*
-int isRendering(const Uint8 flags) {
+void drawPlayer(void) {
 	
-	return !(flags & 1 || flags & 2);
-	
-}
-*/
-
-
-void drawPlayer(Uint32* const bufPtr, const size_t bufHeight, const size_t bufWidth, const double playerPosS, const double playerPosT) {
-	
-	assert(bufPtr != NULL);
-	assert((double)bufHeight > playerPosT && (double)bufWidth > playerPosS);
-	
-	size_t s = (size_t)floorf(playerPosS);
-	size_t t = (size_t)floorf(playerPosT);
-	size_t playerLocation =  t * SCREEN_WIDTH + s;
-	
-	/* fprintf(stderr, "drawPlayer(): s = %zu, t = %zu\n", s, t); */
-	
-	bufPtr[playerLocation] = ctob(0u, 0u, 0u, 255u);
+	const size_t s = (size_t)floor(g_player_pos_s);
+	const size_t t = (size_t)floor(g_player_pos_t);
+	const size_t player_location =  t * SCREEN_WIDTH + s;
+		
+	framebuffer[player_location] = ctob(0u, 0u, 0u, 255u);
 	
 }
 
-void castRay(Uint32* const frameBufPtr, Uint8* const posBufPtr, const size_t frameBufWidth, const double playerPosS, const double playerPosT, const double rayDirS, const double rayDirT) {
 
-	assert(frameBufPtr != NULL && posBufPtr != NULL);
+void lookAt(const double radian) {
+	
+	/*
+	const double temp_dir_s = *p_dir_s * cos(radian) - *p_dir_t * sin(radian);
+	const double temp_dir_t = *p_dir_t * sin(radian) + *p_dir_s * cos(radian);
+	*p_dir_s = temp_dir_s;
+	*p_dir_s = temp_dir_t;
+	*/
+		
+	g_dir_s = cos(radian);
+	g_dir_t = sin(radian);
+
+	g_cam_plane_s = -sin(radian);
+	g_cam_plane_t = cos(radian);
+
+}
+
+void getHorizontalVector(double* const p_horz_vec_s, double* const p_horz_vec_t) {
+	
+	*p_horz_vec_s = g_dir_t;
+	*p_horz_vec_t = -g_dir_s;
+	
+}
+
+
+void castRay(const double ray_dir_s, const double ray_dir_t) {
 
 	/* https://lodev.org/cgtutor/raycasting.html */
 	/* https://www.youtube.com/watch?v=NbSee-XM7WA */
-	
-	/* const Uint32 wallBlue = ctob(0u, 0u, 127u, 255u); */
-	const Uint32 rayWhite = ctob(255u, 255u, 255u, 255u);
-	
-	int intersectedSide = -1; /* 0 for horizontal grid line, 1 for vertical grid line */
-	
-	int frameBufS = (int)floorf(playerPosS), frameBufT = (int)floorf(playerPosT);
-	
-	int stepDirS = 0, stepDirT = 0;
-	
-	const double deltaDistS = (rayDirS) ? fabs(1./rayDirS) : DBL_MAX;
-	const double deltaDistT = (rayDirT) ? fabs(1./rayDirT) : DBL_MAX;
-	
-	double sideDistS = 0., sideDistT = 0.;
-	
-	if (rayDirS > 0.f) {
 		
-		sideDistS = (1.0 - playerPosS + frameBufS) * deltaDistS; 
-		stepDirS = 1;
+	int intersected_side; /* 0 for horizontal grid line, 1 for vertical grid line */
+	
+	int step_s = 0, step_t = 0;
+	
+	size_t player_pos_s_on_framebuffer = (size_t)floor(g_player_pos_s);
+	size_t player_pos_t_on_framebuffer = (size_t)floor(g_player_pos_t);
+	
+	size_t buffer_pixel_index =
+		player_pos_t_on_framebuffer * SCREEN_WIDTH + player_pos_s_on_framebuffer;
+	
+	int isWallHit = position_buffer[buffer_pixel_index] == 1u;
+	
+	const Uint32 color_ray_white = ctob(255u, 255u, 255u, 255u);
+	
+	const double delta_s = (ray_dir_s == 0.) ? DBL_MAX : fabs(1. / ray_dir_s);
+	const double delta_t = (ray_dir_t == 0.) ? DBL_MAX : fabs(1. / ray_dir_t);
+	
+	double dist_s = 0., dist_t = 0.;
+	
+	if (ray_dir_s > 0.) {
+		
+		dist_s = (1.0 - g_player_pos_s + (double)player_pos_s_on_framebuffer) * delta_s; 
+		step_s = 1;
 		
 	} else {
 		
-		sideDistS = (playerPosS - frameBufS) * deltaDistS;
-		stepDirS = -1;
+		dist_s = (g_player_pos_s - (double)player_pos_s_on_framebuffer) * delta_s;
+		step_s = -1;
 		
 	}
 	
-	if (rayDirT > 0.f) {
+	if (ray_dir_t > 0.) {
 		
-		sideDistT = (1.0 - playerPosT + frameBufT) * deltaDistT; 
-		stepDirT = 1;
+		dist_t = (1.0 - g_player_pos_t + (double)player_pos_t_on_framebuffer) * delta_t; 
+		step_t = 1;
 		
 	} else {
 		
-		sideDistT = (playerPosT - frameBufT) * deltaDistT; 
-		stepDirT = -1;
+		dist_t = (g_player_pos_t - (double)player_pos_t_on_framebuffer) * delta_t; 
+		step_t = -1;
 		
 	}
-	
-	/* fprintf(stderr, "main(): (posBuffer[framebufferT * SCREEN_WIDTH + framebufferS] != 1u) == %d\n", posBuffer[framebufferT * SCREEN_WIDTH + framebufferS] != 1u); */
-	
-	while(posBufPtr[frameBufT * frameBufWidth + frameBufS] != 1u) { /* 1u in posBufPtr is a wall */
+
+
+	while(isWallHit == FALSE) {
 		
-		/* static int whileCount = 0; */
-		
-		/* fprintf(stderr, "main(): while loop running... %d\n", whileCount++); */
-		
-		if (sideDistS > sideDistT) {
+		if (dist_s > dist_t) {
 			
-			sideDistT += deltaDistT;
-			frameBufT += stepDirT;
-			intersectedSide = 1;
+			dist_t += delta_t;
+			player_pos_t_on_framebuffer += step_t;
+			intersected_side = 1;
 			
 		} else {
 			
-			sideDistS += deltaDistS;
-			frameBufS += stepDirS;
-			intersectedSide = 0;
+			dist_s += delta_s;
+			player_pos_s_on_framebuffer += step_s;
+			intersected_side = 0;
 			
 		}
 		
-		frameBufPtr[frameBufT * frameBufWidth + frameBufS] = rayWhite;
-		
+		buffer_pixel_index = player_pos_t_on_framebuffer * SCREEN_WIDTH + player_pos_s_on_framebuffer;
+		framebuffer[buffer_pixel_index] = color_ray_white;
+		isWallHit = position_buffer[buffer_pixel_index] == 1u;
+	
 	}
 	
 }
 
-void fillBackground(Uint32* const frameBufPtr, const size_t frameBufHeight, const size_t frameBufWidth) {
-	
-	assert(frameBufPtr != NULL);
-	
-	size_t i, j;
-	for (i = 0; i < frameBufHeight; i++) {
-	
-		for (j = 0; j < frameBufWidth; j++) frameBufPtr[i * frameBufWidth + j] = ctob((Uint32)i, (Uint32)j, 0u, 255u);
-		
-	}
-	
-}
-
-void getHorizontalVector(const double rayDirS, const double rayDirT, double* const horzVecSPtr, double* const horzVecTPtr) {
-	
-	assert(horzVecSPtr != NULL && horzVecTPtr != NULL);
-	
-	*horzVecSPtr = rayDirT;
-	*horzVecTPtr = -rayDirS;
-	
-}
-
-void lookAt(double* const dirSPtr, double* const dirTPtr, double* const camLineS, double* const camLineT, const double radian) {
-	
-	/*
-	const double tempDirS = *dirSPtr * cos(radian) - *dirTPtr * sin(radian);
-	const double tempDirT = *dirSPtr * sin(radian) + *dirTPtr * cos(radian);
-	*dirSPtr = tempDirS;
-	*dirTPtr = tempDirT;
-	*/
-		
-	*dirSPtr = cos(radian);
-	*dirTPtr = sin(radian);
-
-	*camLineS = -sin(radian);
-	*camLineT = cos(radian);
-
-}
-
-void performRaycasting(Uint32* const frameBufPtr, Uint8* const posBufPtr, const size_t frameBufWidth, const double playerPosS, const double playerPosT, const double rayDirS, const double rayDirT, const double camLineS, const double camLineT) {
+void performRaycasting(void) {
 			
-	size_t ray;
+	size_t ray = 0u;
 	
-	castRay(frameBufPtr, posBufPtr, frameBufWidth, playerPosS, playerPosT, rayDirS, rayDirT);
-	 
-	for (ray = 0u; ray < 128u; ray++) {	
+	castRay(g_dir_s, g_dir_t);
+	
+	for (; ray < 128u; ray++) {	
 		
-		double leftRayDirS = rayDirS - camLineS * ray / 256;
-		double leftRayDirT = rayDirT - camLineT * ray / 256;
+		double left_ray_dir_s = g_dir_s - g_cam_plane_s * ray / 256.;
+		double left_ray_dir_t = g_dir_t - g_cam_plane_t * ray / 256.;
 		
-		double rightRayDirS = rayDirS + camLineS * ray / 256;
-		double rightRayDirT = rayDirT + camLineT * ray / 256;
+		double right_ray_dir_s = g_dir_s + g_cam_plane_s * ray / 256.;
+		double right_ray_dir_t = g_dir_t + g_cam_plane_t * ray / 256.;
 		
-		castRay(frameBufPtr, posBufPtr, frameBufWidth, playerPosS, playerPosT, leftRayDirS, leftRayDirT);
-		castRay(frameBufPtr, posBufPtr, frameBufWidth, playerPosS, playerPosT, rightRayDirS, rightRayDirT);
+		castRay(left_ray_dir_s, left_ray_dir_t);
+		castRay(right_ray_dir_s, right_ray_dir_t);
 						
 	}
 	
 }
 
-void handleEvent(
-	Uint8* const isExitClickedPtr, Uint8* const isESCPressedPtr,
-	double* const playerPosSPtr, double* const playerPosTPtr, double* const playerYawPtr,
-	double* const rayDirSPtr, double* const rayDirTPtr,
-	double* const camLineSPtr, double* const camLineTPtr
-) {
-	
-	SDL_Event event;
 
-	while (SDL_PollEvent(&event)) {
-		
-		*isExitClickedPtr = (SDL_EVENT_QUIT == event.type) ? 1u : 0u;
-
-		/* https://wiki.libsdl.org/SDL3/BestKeyboardPractices */
-		*isESCPressedPtr = (SDL_EVENT_KEY_DOWN == event.type && event.key.key == SDLK_ESCAPE) ? 2u : 0u;
-		
-		if (SDL_EVENT_KEY_DOWN == event.type) {
-		
-			if (event.key.key == SDLK_W) {
-				
-				*playerPosSPtr += *rayDirSPtr;
-				*playerPosTPtr += *rayDirTPtr;
-				
-			} else if (event.key.key == SDLK_S) {
-			
-				*playerPosSPtr -= *rayDirSPtr;
-				*playerPosTPtr -= *rayDirTPtr;
-			
-			} else if (event.key.key == SDLK_A) {
-				
-				double horzVecS = 0., horzVecT = 0.;
-				getHorizontalVector(*rayDirSPtr, *rayDirTPtr, &horzVecS, &horzVecT);
-			
-				*playerPosSPtr += horzVecS;
-				*playerPosTPtr += horzVecT;
-			
-			} else if (event.key.key == SDLK_D) {
-				
-				double horzVecS = 0., horzVecT = 0.;
-				getHorizontalVector(*rayDirSPtr, *rayDirTPtr, &horzVecS, &horzVecT);
-			
-				*playerPosSPtr -= horzVecS;
-				*playerPosTPtr -= horzVecT;
-			
-			} else if (event.key.key == SDLK_LEFT) {
-			
-				*playerYawPtr -= 1.;
-				if (*playerYawPtr < 0.) *playerYawPtr += 360.;
-				lookAt(rayDirSPtr, rayDirTPtr, camLineSPtr, camLineTPtr, DEGREE_TO_RADIAN(*playerYawPtr));
-				
-			} else if (event.key.key == SDLK_RIGHT) {
-				 
-				*playerYawPtr += 1.;
-				if (*playerYawPtr > 0.) *playerYawPtr -= 360.;
-				lookAt(rayDirSPtr, rayDirTPtr, camLineSPtr, camLineTPtr, DEGREE_TO_RADIAN(*playerYawPtr));
-				
-			}
-		
-		}
-		
-	}	
+void swapBuffersWindow(void) {
 	
+	/* https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.hpp */
+	/* https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.cpp */
+	
+	/* https://www.youtube.com/watch?v=rB8N5cFCHLQ */
+	
+	SDL_UpdateTexture(g_texture, NULL, (void*)framebuffer, sizeof(*framebuffer) * SCREEN_WIDTH);
+	
+	/* https://wiki.libsdl.org/SDL3/SDL_RenderTexture */
+	SDL_FRect srcrect, dstrect;
+	srcrect.x = dstrect.x = srcrect.y = dstrect.y = 0.f;
+	srcrect.w = dstrect.w = (float)SCREEN_WIDTH;
+	srcrect.h = dstrect.h = (float)SCREEN_HEIGHT;
+	
+	SDL_RenderTexture(g_renderer, g_texture, &srcrect, &dstrect);
+	SDL_RenderPresent(g_renderer);
+
 }
