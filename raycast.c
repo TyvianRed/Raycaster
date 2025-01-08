@@ -257,12 +257,12 @@ void getHorizontalVector(double* const p_horz_vec_s, double* const p_horz_vec_t)
 }
 
 
-void castRay(const double ray_dir_s, const double ray_dir_t) {
+void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column) {
 
 	/* https://lodev.org/cgtutor/raycasting.html */
 	/* https://www.youtube.com/watch?v=NbSee-XM7WA */
 		
-	int intersected_side; /* 0 for horizontal grid line, 1 for vertical grid line */
+	signed int intersected_side; /* 0 for horizontal grid line, 1 for vertical grid line */
 	
 	int step_s = 0, step_t = 0;
 	
@@ -272,15 +272,16 @@ void castRay(const double ray_dir_s, const double ray_dir_t) {
 	size_t buffer_pixel_index =
 		player_pos_t_on_framebuffer * DUAL_SCREEN_WIDTH + player_pos_s_on_framebuffer;
 	
-	int isWallHit = position_buffer[buffer_pixel_index] == 1u;
+	signed int isWallHit = (position_buffer[buffer_pixel_index] == 1u);
 	
 	const Uint32 color_ray_white = ctob(255u, 255u, 255u, 255u);
-	
+	const Uint32 color_intersected = ctob(0u, 0u, 127u, 255u);
+    
 	const double delta_s = (ray_dir_s == 0.) ? DBL_MAX : fabs(1. / ray_dir_s);
 	const double delta_t = (ray_dir_t == 0.) ? DBL_MAX : fabs(1. / ray_dir_t);
 	
 	double dist_s = 0., dist_t = 0.;
-	
+    
 	if (ray_dir_s > 0.) {
 		
 		dist_s = (1.0 - g_player_pos_s + (double)player_pos_s_on_framebuffer) * delta_s; 
@@ -324,29 +325,59 @@ void castRay(const double ray_dir_s, const double ray_dir_t) {
 		
 		buffer_pixel_index = player_pos_t_on_framebuffer * DUAL_SCREEN_WIDTH + player_pos_s_on_framebuffer;
 		framebuffer[buffer_pixel_index] = color_ray_white;
-		isWallHit = position_buffer[buffer_pixel_index] == 1u;
+		isWallHit = (position_buffer[buffer_pixel_index] == 1u);
 	
 	}
+    
+    {
+        /* https://lodev.org/cgtutor/raycasting.html */
+        
+        const size_t intersected_column_height = 40u * SCREEN_HEIGHT / (size_t)sqrt(dist_s * dist_s + dist_t * dist_t);
+        signed int missed_column_height = (size_t)((SCREEN_HEIGHT - intersected_column_height) * 0.5);
+        
+        size_t framebuffer_row = 0, framebuffer_bound = SCREEN_HEIGHT;
+        
+        if (missed_column_height >= 0) {
+            framebuffer_row = missed_column_height;
+            framebuffer_bound = SCREEN_HEIGHT - missed_column_height;
+        }
+        
+        for (; framebuffer_row < framebuffer_bound; framebuffer_row++)
+            framebuffer[(framebuffer_row * DUAL_SCREEN_WIDTH) + (SCREEN_WIDTH + column)] = color_intersected;
+        
+    }
 	
 }
 
 void performRaycasting(void) {
 			
 	size_t ray = 0u;
+    
+    const double left_ray_dir_s = g_dir_s - g_cam_plane_s;
+    const double left_ray_dir_t = g_dir_t - g_cam_plane_t;
 	
-	castRay(g_dir_s, g_dir_t);
+	/* castRay(g_dir_s, g_dir_t, 128u); */
 	
-	for (; ray < 128u; ray++) {	
+	for (; ray < SCREEN_WIDTH; ray++) {	
 		
-		double left_ray_dir_s = g_dir_s - g_cam_plane_s * ray / 256.;
+		/*
+        double left_ray_dir_s = g_dir_s - g_cam_plane_s * ray / 256.;
 		double left_ray_dir_t = g_dir_t - g_cam_plane_t * ray / 256.;
 		
 		double right_ray_dir_s = g_dir_s + g_cam_plane_s * ray / 256.;
 		double right_ray_dir_t = g_dir_t + g_cam_plane_t * ray / 256.;
 		
-		castRay(left_ray_dir_s, left_ray_dir_t);
-		castRay(right_ray_dir_s, right_ray_dir_t);
-						
+		castRay(left_ray_dir_s, left_ray_dir_t, ray);
+		castRay(right_ray_dir_s, right_ray_dir_t, 255u - ray);
+        */
+        
+        const double ray_screen_ratio = (double)ray / 128.;
+        castRay(
+            left_ray_dir_s + g_cam_plane_s * ray_screen_ratio,
+            left_ray_dir_t + g_cam_plane_t * ray_screen_ratio,
+            ray
+        );
+		
 	}
 	
 }

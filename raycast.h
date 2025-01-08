@@ -57,7 +57,7 @@ void drawPlayer(void);
 void lookAt(const double radian);
 void getHorizontalVector(double* const p_horz_vec_s, double* const p_horz_vec_t);
 
-void castRay(const double ray_dir_s, const double ray_dir_t);
+void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column);
 void performRaycasting(void);
 
 void swapBuffersWindow(void);
