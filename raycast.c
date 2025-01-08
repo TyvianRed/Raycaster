@@ -25,7 +25,7 @@ void createWindow(void) {
 
 	if ((g_window = SDL_CreateWindow(
 		"Raycaster",
-		SCREEN_WIDTH, SCREEN_HEIGHT,
+		DUAL_SCREEN_WIDTH, SCREEN_HEIGHT,
 		0
 	)) == NULL) {
 		
@@ -51,7 +51,7 @@ void createWindow(void) {
 	if ((g_texture = SDL_CreateTexture(
 		g_renderer,
 		SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
-		SCREEN_WIDTH, SCREEN_WIDTH
+		DUAL_SCREEN_WIDTH, SCREEN_WIDTH
 	)) == NULL) {
 		
 		fprintf(stderr, "createWindow(): failed to create texture\n%s\n", SDL_GetError());
@@ -172,10 +172,14 @@ void handleEvent(void) {
 void fillBackground(void) {
 	
 	size_t i = 0, j;
-	for (; i < SCREEN_HEIGHT; i++)
-		for (j = 0; j < SCREEN_WIDTH; j++)
-			framebuffer[i * SCREEN_WIDTH + j] = ctob((Uint32)i, (Uint32)j, 0u, 255u);
-	
+	for (; i < SCREEN_HEIGHT; i++) {
+		for (j = 0; j < SCREEN_WIDTH; j++) {
+            const Uint32 color_pixel = ctob((Uint32)i, (Uint32)j, 0u, 255u);
+			framebuffer[i * DUAL_SCREEN_WIDTH + j] = color_pixel;
+            framebuffer[i * DUAL_SCREEN_WIDTH + (j + SCREEN_WIDTH)] = color_pixel;
+        }
+    }
+    
 }
 
 void drawMap(const Uint8* const p_map, const size_t map_height, const size_t map_width) {
@@ -202,7 +206,7 @@ void drawMap(const Uint8* const p_map, const size_t map_height, const size_t map
 					
 				for (dWM = j * inv_map_width * SCREEN_WIDTH; dWM < horz_end; dWM++) {
 					
-					const size_t buffer_pixel_index = dHM * SCREEN_WIDTH + dWM;
+					const size_t buffer_pixel_index = dHM * DUAL_SCREEN_WIDTH + dWM;
 					
 					framebuffer[buffer_pixel_index] = color_wall;
 					position_buffer[buffer_pixel_index] = 1u;
@@ -221,7 +225,7 @@ void drawPlayer(void) {
 	
 	const size_t s = (size_t)floor(g_player_pos_s);
 	const size_t t = (size_t)floor(g_player_pos_t);
-	const size_t player_location =  t * SCREEN_WIDTH + s;
+	const size_t player_location =  t * DUAL_SCREEN_WIDTH + s;
 		
 	framebuffer[player_location] = ctob(0u, 0u, 0u, 255u);
 	
@@ -266,7 +270,7 @@ void castRay(const double ray_dir_s, const double ray_dir_t) {
 	size_t player_pos_t_on_framebuffer = (size_t)floor(g_player_pos_t);
 	
 	size_t buffer_pixel_index =
-		player_pos_t_on_framebuffer * SCREEN_WIDTH + player_pos_s_on_framebuffer;
+		player_pos_t_on_framebuffer * DUAL_SCREEN_WIDTH + player_pos_s_on_framebuffer;
 	
 	int isWallHit = position_buffer[buffer_pixel_index] == 1u;
 	
@@ -318,7 +322,7 @@ void castRay(const double ray_dir_s, const double ray_dir_t) {
 			
 		}
 		
-		buffer_pixel_index = player_pos_t_on_framebuffer * SCREEN_WIDTH + player_pos_s_on_framebuffer;
+		buffer_pixel_index = player_pos_t_on_framebuffer * DUAL_SCREEN_WIDTH + player_pos_s_on_framebuffer;
 		framebuffer[buffer_pixel_index] = color_ray_white;
 		isWallHit = position_buffer[buffer_pixel_index] == 1u;
 	
@@ -355,12 +359,12 @@ void swapBuffersWindow(void) {
 	
 	/* https://www.youtube.com/watch?v=rB8N5cFCHLQ */
 	
-	SDL_UpdateTexture(g_texture, NULL, (void*)framebuffer, sizeof(*framebuffer) * SCREEN_WIDTH);
+	SDL_UpdateTexture(g_texture, NULL, (void*)framebuffer, sizeof(*framebuffer) * DUAL_SCREEN_WIDTH);
 	
 	/* https://wiki.libsdl.org/SDL3/SDL_RenderTexture */
 	SDL_FRect srcrect, dstrect;
 	srcrect.x = dstrect.x = srcrect.y = dstrect.y = 0.f;
-	srcrect.w = dstrect.w = (float)SCREEN_WIDTH;
+	srcrect.w = dstrect.w = (float)DUAL_SCREEN_WIDTH;
 	srcrect.h = dstrect.h = (float)SCREEN_HEIGHT;
 	
 	SDL_RenderTexture(g_renderer, g_texture, &srcrect, &dstrect);
