@@ -78,7 +78,7 @@ void quitRaycaster(void) {
 	
 }
 
-// bit pattern to color
+// bit pattern to RGB
 void btoc(
     const Uint32 color, Uint8* const r,  Uint8* const g, Uint8* const b, Uint8* const a
 ) {
@@ -113,8 +113,7 @@ void handleEvent(void) {
 		isExitClicked = (SDL_EVENT_QUIT == event.type) ? 1u : 0u;
 
 		// https://wiki.libsdl.org/SDL3/BestKeyboardPractices
-		isESCPressed =
-            (SDL_EVENT_KEY_DOWN == event.type && event.key.key == SDLK_ESCAPE) ? 2u : 0u;
+		isESCPressed = (SDL_EVENT_KEY_DOWN == event.type && event.key.key == SDLK_ESCAPE) ? 2u : 0u;
 		
 		if (SDL_EVENT_KEY_DOWN == event.type) {
         
@@ -134,11 +133,11 @@ void handleEvent(void) {
                 
                 s_player_pos_s += s_dir_s * g_delta_time;
                 
-                size_t player_pos_s_on_framebuffer = (size_t)floor(s_player_pos_s);
-                size_t player_pos_t_on_framebuffer = (size_t)floor(s_player_pos_t);
+                size_t player_buf_s = (size_t)floor(s_player_pos_s);
+                size_t player_buf_t = (size_t)floor(s_player_pos_t);
                 
                 if (s_position_buffer[
-                    player_pos_t_on_framebuffer * DUAL_SCREEN_WIDTH + player_pos_s_on_framebuffer
+                    player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s
                 ] == 1u) {
                     
                     s_player_pos_s = previous_player_pos_s;
@@ -146,10 +145,10 @@ void handleEvent(void) {
                 }
                 
                 s_player_pos_t += s_dir_t * g_delta_time;
-                player_pos_t_on_framebuffer = (size_t)floor(s_player_pos_t);
+                player_buf_t = (size_t)floor(s_player_pos_t);
                 
                 if (s_position_buffer[
-                    player_pos_t_on_framebuffer * DUAL_SCREEN_WIDTH + player_pos_s_on_framebuffer
+                    player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s
                 ] == 1u) {
                     
                     s_player_pos_t = previous_player_pos_t;
@@ -194,11 +193,14 @@ void handleEvent(void) {
                 detectCollision(previous_player_pos_s, previous_player_pos_t);
                 
 			} else if (event.key.key == SDLK_LEFT) {
+                
                 lookAt(-1.);
+                
 			} else if (event.key.key == SDLK_RIGHT) {
+                
                 lookAt(1.);
-            }
-                        
+                
+            }   
 		}
 		
 	}	
@@ -301,11 +303,10 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 	
 	int step_s = 0, step_t = 0;
 	
-	size_t player_pos_s_on_framebuffer = (size_t)floor(s_player_pos_s);
-	size_t player_pos_t_on_framebuffer = (size_t)floor(s_player_pos_t);
+	size_t player_buf_s = (size_t)floor(s_player_pos_s);
+	size_t player_buf_t = (size_t)floor(s_player_pos_t);
 	
-	size_t buffer_pixel_index =
-		player_pos_t_on_framebuffer * DUAL_SCREEN_WIDTH + player_pos_s_on_framebuffer;
+	size_t buffer_pixel_index = player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s;
 	
 	bool is_wall_intersected = (s_position_buffer[buffer_pixel_index] == 1u);
 	
@@ -320,24 +321,24 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
     
 	if (ray_dir_s > 0.) {
 		
-		dist_s = (1.0 - s_player_pos_s + (double)player_pos_s_on_framebuffer) * delta_s; 
+		dist_s = (1.0 - s_player_pos_s + (double)player_buf_s) * delta_s; 
 		step_s = 1;
 		
 	} else {
 		
-		dist_s = (s_player_pos_s - (double)player_pos_s_on_framebuffer) * delta_s;
+		dist_s = (s_player_pos_s - (double)player_buf_s) * delta_s;
 		step_s = -1;
 		
 	}
 	
 	if (ray_dir_t > 0.) {
 		
-		dist_t = (1.0 - s_player_pos_t + (double)player_pos_t_on_framebuffer) * delta_t; 
+		dist_t = (1.0 - s_player_pos_t + (double)player_buf_t) * delta_t; 
 		step_t = 1;
 		
 	} else {
 		
-		dist_t = (s_player_pos_t - (double)player_pos_t_on_framebuffer) * delta_t; 
+		dist_t = (s_player_pos_t - (double)player_buf_t) * delta_t; 
 		step_t = -1;
 		
 	}
@@ -348,19 +349,19 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 		if (dist_s > dist_t) {
 			
 			dist_t += delta_t;
-			player_pos_t_on_framebuffer += step_t;
+			player_buf_t += step_t;
 			intersected_side = true;
 			
 		} else {
 			
 			dist_s += delta_s;
-			player_pos_s_on_framebuffer += step_s;
+			player_buf_s += step_s;
 			intersected_side = false;
 			
 		}
 		
 		buffer_pixel_index =
-            player_pos_t_on_framebuffer * DUAL_SCREEN_WIDTH + player_pos_s_on_framebuffer;
+            player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s;
 		s_framebuffer[buffer_pixel_index] = color_ray_white;
 		is_wall_intersected = (s_position_buffer[buffer_pixel_index] == 1u);
 	
@@ -373,8 +374,7 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
     if (perpendicular_distance > EPSILON)
         intersected_column_height = (size_t)(SCREEN_HEIGHT * 42 / perpendicular_distance);
     
-    const signed int missed_column_height = 
-        (signed int)((SCREEN_HEIGHT - intersected_column_height) * 0.5);
+    const signed int missed_column_height = (signed int)((SCREEN_HEIGHT - intersected_column_height) * 0.5);
     
     size_t framebuffer_row = 0, framebuffer_bound = SCREEN_HEIGHT;
     
@@ -384,9 +384,7 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
     }
     
     for (; framebuffer_row < framebuffer_bound; framebuffer_row++) {
-        s_framebuffer[
-            (framebuffer_row * DUAL_SCREEN_WIDTH) + (SCREEN_WIDTH + column)
-        ] = (intersected_side) ? color_dimmed_intersected : color_intersected;
+        s_framebuffer[(framebuffer_row * DUAL_SCREEN_WIDTH) + (SCREEN_WIDTH + column)] = (intersected_side) ? color_dimmed_intersected : color_intersected;
     }
 	
 }
@@ -436,22 +434,18 @@ void detectCollision(const double previous_player_pos_s, const double previous_p
     
     // s_player_pos_s += s_dir_s * g_delta_time;
     
-    size_t player_pos_s_on_framebuffer = (size_t)floor(s_player_pos_s);
-    size_t player_pos_t_on_framebuffer = (size_t)floor(previous_player_pos_t);
+    size_t player_buf_s = (size_t)floor(s_player_pos_s);
+    size_t player_buf_t = (size_t)floor(previous_player_pos_t);
     
-    if (s_position_buffer[
-        player_pos_t_on_framebuffer * DUAL_SCREEN_WIDTH + player_pos_s_on_framebuffer
-    ] == 1u) {
+    if (s_position_buffer[player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s] == 1u) {
         
         s_player_pos_s = previous_player_pos_s;
        
     }
     
-    player_pos_t_on_framebuffer = (size_t)floor(s_player_pos_t);
+    player_buf_t = (size_t)floor(s_player_pos_t);
     
-    if (s_position_buffer[
-        player_pos_t_on_framebuffer * DUAL_SCREEN_WIDTH + player_pos_s_on_framebuffer
-    ] == 1u) {
+    if (s_position_buffer[player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s] == 1u) {
         
         s_player_pos_t = previous_player_pos_t;
        
