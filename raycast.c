@@ -260,7 +260,7 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 	// https://lodev.org/cgtutor/raycasting.html
 	// https://www.youtube.com/watch?v=NbSee-XM7WA
 		
-	bool intersected_side; // 0 for horizontal grid line, 1 for vertical grid line
+	bool intersected_side; // false for horizontal grid line, true for vertical grid line
 	
 	int step_s = 0, step_t = 0;
 	
