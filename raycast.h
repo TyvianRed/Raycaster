@@ -24,12 +24,13 @@
 #define DUAL_SCREEN_WIDTH (512u)
 #define SCREEN_BUF_SIZE (122880u)
 
-#define EPSILON 1E-9
+#define COLOR_WALL_BLUE (0x7FFFu)
+#define COLOR_DIMMED_WALL_BLUE (0x3FFFu)
+#define COLOR_RAY_WHITE (0xFFFFFFFFu)
+
+#define EPSILON (1E-9)
 
 #define IS_RENDERING(flags) (!((flags) & 1u || (flags) & 2u))
-
-#define DEGREE_TO_RADIAN(degree) (degree * M_PI / 180.)
-
 
 extern Uint8 isExitClicked, isESCPressed;
 

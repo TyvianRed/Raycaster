@@ -22,7 +22,7 @@ int main (void) {
 	};
 	
 	const size_t map_height = 16u, map_width = 16u;
-		
+    
 	createWindow();
 	
     Uint64 current_time, previous_time = SDL_GetTicks();
