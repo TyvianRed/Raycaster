@@ -41,24 +41,18 @@ extern SDL_Renderer* g_renderer;
 extern SDL_Texture* g_texture;
 
 
+void initRaycaster(void);
 void createWindow(void);
 void quitRaycaster(void);
 
 // RGB to bit pattern
 inline Uint32 ctob(const Uint32 r, const Uint32 g, const Uint32 b, const Uint32 a) {
-	
 	// https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.cpp
-	
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-
 	return a << 24 | b << 16 | g << 8 | r;
-	
 #else
-	
 	return r << 24 | g << 16 | b << 8 | a;
-
 #endif
-
 }
 
 void btoc(

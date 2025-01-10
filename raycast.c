@@ -5,16 +5,24 @@ Uint8 isExitClicked, isESCPressed;
 static Uint8 s_position_buffer[SCREEN_BUF_SIZE];
 static Uint32 s_framebuffer[SCREEN_BUF_SIZE];
 
-static double s_player_pos_s = 20., s_player_pos_t = 25.;
-static double s_dir_s = 1., s_dir_t;
+static double s_player_pos_s, s_player_pos_t;
+static double s_dir_s, s_dir_t;
 static const double S_ROTATION_SPEED = 1. * M_PI / 180.;
-static double s_cam_plane_s, s_cam_plane_t = 0.3;
+static double s_cam_plane_s, s_cam_plane_t;
 double g_delta_time;
 
 SDL_Window* g_window;
 SDL_Renderer* g_renderer;
 SDL_Texture* g_texture;
 
+void initRaycaster(void) {
+    s_player_pos_s = 20.;
+    s_player_pos_t = 25.;
+    s_dir_s = 1.;
+    s_cam_plane_t = 0.3;
+    s_dir_t = s_cam_plane_s = 0.;
+    createWindow();
+}
 
 void createWindow(void) {
 
