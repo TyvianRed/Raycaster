@@ -27,6 +27,7 @@
 #define COLOR_WALL_BLUE (0x7FFFu)
 #define COLOR_DIMMED_WALL_BLUE (0x3FFFu)
 #define COLOR_RAY_WHITE (0xFFFFFFFFu)
+#define COLOR_PLAYER_BLACK (0xFFu)
 
 #define EPSILON (1E-9)
 

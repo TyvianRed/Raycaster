@@ -2,13 +2,17 @@
 
 
 Uint8 isExitClicked, isESCPressed;
+
 static Uint8 s_position_buffer[SCREEN_BUF_SIZE];
+
 static Uint32 s_framebuffer[SCREEN_BUF_SIZE];
 
 static double s_player_pos_s, s_player_pos_t;
 static double s_dir_s, s_dir_t;
-static const double S_ROTATION_SPEED = 1. * M_PI / 180.;
 static double s_cam_plane_s, s_cam_plane_t;
+
+static const double S_ROTATION_SPEED = 1. * M_PI / 180.;
+
 double g_delta_time;
 
 SDL_Window* g_window;
@@ -221,7 +225,7 @@ void drawPlayer(void) {
 	const size_t t = (size_t)floor(s_player_pos_t);
 	const size_t player_location =  t * DUAL_SCREEN_WIDTH + s;
 		
-	s_framebuffer[player_location] = ctob(0u, 0u, 0u, 255u);
+	s_framebuffer[player_location] = COLOR_PLAYER_BLACK;
 	
 }
 
