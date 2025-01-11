@@ -11,9 +11,10 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include "texture.h"
+
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_init.h"
-// #include "SDL3/SDL_oldnames.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
@@ -42,17 +43,17 @@ extern SDL_Renderer* g_renderer;
 extern SDL_Texture* g_texture;
 
 
-void initRaycaster(void);
+void initializeRaycaster(void);
 void createWindow(void);
 void quitRaycaster(void);
 
 // RGB to bit pattern
-inline Uint32 ctob(const Uint32 r, const Uint32 g, const Uint32 b, const Uint32 a) {
+inline Uint32 ctob(const Uint8 r, const Uint8 g, const Uint8 b, const Uint8 a) {
 	// https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.cpp
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-	return a << 24 | b << 16 | g << 8 | r;
+	return ((Uint32)(a << 24 | b << 16 | g << 8 | r));
 #else
-	return r << 24 | g << 16 | b << 8 | a;
+	return ((Uint32)(r << 24 | g << 16 | b << 8 | a));
 #endif
 }
 

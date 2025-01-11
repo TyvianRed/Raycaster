@@ -19,7 +19,7 @@ SDL_Window* g_window;
 SDL_Renderer* g_renderer;
 SDL_Texture* g_texture;
 
-void initRaycaster(void) {
+void initializeRaycaster(void) {
     s_player_pos_s = 20.;
     s_player_pos_t = 25.;
     s_dir_s = 1.;
@@ -41,6 +41,9 @@ void createWindow(void) {
             "createWindow(): failed to create window\n%s\n",
             SDL_GetError()
         );
+        
+        SDL_DestroyWindow(g_window);
+        SDL_Quit();
 		exit(EXIT_FAILURE);
 		
 	}
@@ -53,6 +56,11 @@ void createWindow(void) {
             "createWindow(): failed to create renderer\n%s\n",
             SDL_GetError()
         );
+        
+        SDL_DestroyRenderer(g_renderer);
+        SDL_DestroyWindow(g_window);
+        SDL_Quit();
+	
 		exit(EXIT_FAILURE);
 		
 	}
@@ -64,6 +72,11 @@ void createWindow(void) {
             "createWindow(): failed to set render draw color\n%s\n",
             SDL_GetError()
         );
+        
+        SDL_DestroyRenderer(g_renderer);
+        SDL_DestroyWindow(g_window);
+        SDL_Quit();
+        
 		exit(EXIT_FAILURE);
 		
 	}
@@ -75,8 +88,13 @@ void createWindow(void) {
 	);
 	if (g_texture == NULL) {
 		
-		fprintf(stderr, "createWindow(): failed to create texture\n%s\n", SDL_GetError());
-		exit(EXIT_FAILURE);
+		SDL_LogError(
+            SDL_LOG_CATEGORY_ERROR,
+            "createWindow(): failed to create texture\n%s\n",
+            SDL_GetError()
+        );
+		quitRaycaster();
+        exit(EXIT_FAILURE);
 		
 	}
 	
@@ -85,6 +103,7 @@ void createWindow(void) {
 void quitRaycaster(void) {
 	
 	SDL_DestroyTexture(g_texture);
+    SDL_DestroyRenderer(g_renderer);
 	SDL_DestroyWindow(g_window);
 	SDL_Quit();
 	
@@ -173,7 +192,7 @@ void fillBackground(void) {
 	size_t i = 0, j;
 	for (; i < SCREEN_HEIGHT; i++) {
 		for (j = 0; j < SCREEN_WIDTH; j++) {
-            const Uint32 color_pixel = ctob((Uint32)i, (Uint32)j, 0u, 255u);
+            const Uint32 color_pixel = ctob(i, j, 0u, 255u);
 			s_framebuffer[i * DUAL_SCREEN_WIDTH + j] = color_pixel;
             s_framebuffer[i * DUAL_SCREEN_WIDTH + (j + SCREEN_WIDTH)] = color_pixel;
         }
@@ -182,8 +201,6 @@ void fillBackground(void) {
 }
 
 void drawMap(const Uint8* const p_map, const size_t map_height, const size_t map_width) {
-	
-	const Uint32 color_wall = ctob(0u, 0u, 127u, 255u);
 	
 	const double inv_map_height = 1.f / map_height;
 	const double inv_map_width = 1.f / map_width;
@@ -206,7 +223,7 @@ void drawMap(const Uint8* const p_map, const size_t map_height, const size_t map
 				for (dWM = j * inv_map_width * SCREEN_WIDTH; dWM < horz_end; dWM++) {
 					
                     const size_t buffer_pixel_index = dHM * DUAL_SCREEN_WIDTH + dWM;
-					s_framebuffer[buffer_pixel_index] = color_wall;
+					s_framebuffer[buffer_pixel_index] = COLOR_WALL_BLUE;
 					s_position_buffer[buffer_pixel_index] = 1u;
 					
 				}

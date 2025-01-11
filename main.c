@@ -23,7 +23,9 @@ int main (void) {
 	
 	const size_t map_height = 16u, map_width = 16u;
     
-	initRaycaster();
+    loadTexture("walltext.bmp"); // https://github.com/ssloy/tinyraycaster/blob/master/walltext.bmp
+    
+	initializeRaycaster();
 	
     Uint64 current_time, previous_time = SDL_GetTicks();
     
@@ -48,6 +50,8 @@ int main (void) {
 	}
 
 	quitRaycaster();
+    
+    unloadTexture();
 
 	return 0;
 }
