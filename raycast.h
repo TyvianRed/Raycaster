@@ -33,6 +33,16 @@
 #define EPSILON (1E-9)
 
 #define IS_RENDERING(flags) (!((flags) & 1u || (flags) & 2u))
+#define SDL_LOG_ERROR_STR(msg) SDL_LogError(SDL_LOG_CATEGORY_ERROR, msg, SDL_GetError())
+#define SDL_LOG_ERROR(msg) SDL_LogError(SDL_LOG_CATEGORY_ERROR, msg)
+
+// RGB to bit pattern
+// https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.cpp
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+#define CTOB(r, g, b, a) (a << 24 | b << 16 | g << 8 | r)
+#else
+#define CTOB(r, g, b, a) (r << 24 | g << 16 | b << 8 | a)
+#endif
 
 extern Uint8 isExitClicked, isESCPressed;
 
@@ -42,23 +52,12 @@ extern SDL_Window* g_window;
 extern SDL_Renderer* g_renderer;
 extern SDL_Texture* g_texture;
 
-
 void initializeRaycaster(void);
 void createWindow(void);
 void quitRaycaster(void);
 
-// RGB to bit pattern
-inline Uint32 ctob(const Uint8 r, const Uint8 g, const Uint8 b, const Uint8 a) {
-	// https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.cpp
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-	return ((Uint32)(a << 24 | b << 16 | g << 8 | r));
-#else
-	return ((Uint32)(r << 24 | g << 16 | b << 8 | a));
-#endif
-}
-
 void btoc(
-	const Uint32 color, Uint8* const r,  Uint8* const g, Uint8* const b, Uint8* const a
+    const Uint32 color, Uint8* const r,  Uint8* const g, Uint8* const b, Uint8* const a
 ); // Bit pattern to RGB
 
 void handleEvent(void);
