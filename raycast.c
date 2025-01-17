@@ -5,7 +5,7 @@ exitflag_t g_exit_flag;
 
 static Uint8 s_position_buffer[SCREEN_BUF_SIZE];
 
-static Uint32 s_framebuffer[SCREEN_BUF_SIZE];
+static Uint32 s_framebuffer[DUAL_SCREEN_BUF_SIZE];
 
 static double s_player_pos_s, s_player_pos_t;
 static double s_dir_s, s_dir_t;
@@ -174,9 +174,8 @@ void drawMap(const Uint8* const p_map, const size_t map_height, const size_t map
 			
 			for (size_t dHM = row * inv_map_height * SCREEN_HEIGHT; dHM < vert_end; dHM++) {
 				for (size_t dWM = col * inv_map_width * SCREEN_WIDTH; dWM < horz_end; dWM++) {
-                    const size_t buffer_pixel_index = dHM * DUAL_SCREEN_WIDTH + dWM;
-					s_framebuffer[buffer_pixel_index] = COLOR_WALL_BLUE;
-					s_position_buffer[buffer_pixel_index] = 1u;
+					s_framebuffer[dHM * DUAL_SCREEN_WIDTH + dWM] = COLOR_WALL_BLUE;
+					s_position_buffer[dHM * SCREEN_WIDTH + dWM] = 1u;
 				}
 			}
 		}
@@ -221,10 +220,8 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 	
 	size_t player_buf_s = (size_t)floor(s_player_pos_s);
 	size_t player_buf_t = (size_t)floor(s_player_pos_t);
-	
-	size_t player_buf_idx = player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s;
-	
-	bool is_wall_intersected = (s_position_buffer[player_buf_idx] == 1u);
+		
+	bool is_wall_intersected = s_position_buffer[player_buf_t * SCREEN_WIDTH + player_buf_s] == 1u;
     
 	const double delta_s = (ray_dir_s == 0.) ? DBL_MAX : fabs(1. / ray_dir_s);
 	const double delta_t = (ray_dir_t == 0.) ? DBL_MAX : fabs(1. / ray_dir_t);
@@ -258,9 +255,8 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 			intersected_side = false;
 		}
 		
-		player_buf_idx = player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s;
-		s_framebuffer[player_buf_idx] = COLOR_RAY_WHITE;
-		is_wall_intersected = s_position_buffer[player_buf_idx] == 1u;
+		s_framebuffer[player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s] = COLOR_RAY_WHITE;
+		is_wall_intersected = s_position_buffer[player_buf_t * SCREEN_WIDTH + player_buf_s] == 1u;
 	}
     
     const double perpendicular_distance =
@@ -325,11 +321,11 @@ void detectCollision(const double previous_player_pos_s, const double previous_p
     size_t player_buf_s = (size_t)floor(s_player_pos_s);
     size_t player_buf_t = (size_t)floor(previous_player_pos_t);
 
-    if (s_position_buffer[player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s] == 1u)
+    if (s_position_buffer[player_buf_t * SCREEN_WIDTH + player_buf_s] == 1u)
         s_player_pos_s = previous_player_pos_s;
     
     player_buf_t = (size_t)floor(s_player_pos_t);
     
-    if (s_position_buffer[player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s] == 1u)
+    if (s_position_buffer[player_buf_t * SCREEN_WIDTH + player_buf_s] == 1u)
         s_player_pos_t = previous_player_pos_t;
 }
