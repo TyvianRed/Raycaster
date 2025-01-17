@@ -3,6 +3,7 @@
 #define RAYCAST_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -32,7 +33,6 @@
 
 #define EPSILON (1E-9)
 
-#define IS_RENDERING(flags) (!((flags) & 1u || (flags) & 2u))
 #define SDL_LOG_ERROR_STR(msg) SDL_LogError(SDL_LOG_CATEGORY_ERROR, msg, SDL_GetError())
 #define SDL_LOG_ERROR(msg) SDL_LogError(SDL_LOG_CATEGORY_ERROR, msg)
 
@@ -44,7 +44,15 @@
 #define CTOB(r, g, b, a) (r << 24 | g << 16 | b << 8 | a)
 #endif
 
-extern Uint8 isExitClicked, isESCPressed;
+typedef union {
+    Uint8 should_exit;
+    struct {
+        Uint8 is_exit_clicked : 1;
+        Uint8 is_esc_pressed : 1;
+    } flags;
+} exitflag_t;
+
+extern exitflag_t g_exit_flag;
 
 extern double g_delta_time;
 

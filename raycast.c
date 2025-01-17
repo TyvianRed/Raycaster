@@ -1,7 +1,7 @@
 #include "raycast.h"
 
 
-Uint8 isExitClicked, isESCPressed;
+exitflag_t g_exit_flag;
 
 static Uint8 s_position_buffer[SCREEN_BUF_SIZE];
 
@@ -25,7 +25,7 @@ void initializeRaycaster(void) {
     s_dir_s = 1.;
     s_cam_plane_t = 0.3;
     s_dir_t = s_cam_plane_s = 0.;
-    isExitClicked = isESCPressed = 0x0u;
+    memset(&g_exit_flag, 0, sizeof g_exit_flag);
     createWindow();
 }
 
@@ -99,17 +99,16 @@ void btoc(const Uint32 color, Uint8* const r,  Uint8* const g, Uint8* const b, U
 void handleEvent(void) {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
-        isExitClicked = isESCPressed = 0x0u; // TODO : re-evalualte how useful this line is.
         
 		if (SDL_EVENT_QUIT == event.type) {
-            isExitClicked = 0x1u;
+            g_exit_flag.flags.is_exit_clicked = 1;
             break;
         }
 		// https://wiki.libsdl.org/SDL3/BestKeyboardPractices
 		
 		if (SDL_EVENT_KEY_DOWN == event.type) {  
             if (event.key.key == SDLK_ESCAPE) {
-                isESCPressed = 0x2u;
+                g_exit_flag.flags.is_esc_pressed = 1;
                 break;
             }
             

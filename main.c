@@ -27,7 +27,7 @@ int main (void) {
 	
     Uint64 current_time, previous_time = SDL_GetTicks();
     
-	while (IS_RENDERING(isExitClicked | isESCPressed)) {
+	while (!g_exit_flag.should_exit) {
         current_time = SDL_GetTicks();
         g_delta_time = (double)(current_time - previous_time);
         previous_time = current_time;
