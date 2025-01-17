@@ -147,7 +147,7 @@ void handleEvent(void) {
 			
             detectCollision(previous_player_pos_s, previous_player_pos_t); 
 		}
-	}	
+	}
 }
 
 void fillBackground(void) {
@@ -220,7 +220,7 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 	
 	size_t player_buf_s = (size_t)floor(s_player_pos_s);
 	size_t player_buf_t = (size_t)floor(s_player_pos_t);
-		
+    
 	bool is_wall_intersected = s_position_buffer[player_buf_t * SCREEN_WIDTH + player_buf_s] == 1u;
     
 	const double delta_s = (ray_dir_s == 0.) ? DBL_MAX : fabs(1. / ray_dir_s);

@@ -27,7 +27,7 @@ int main (void) {
 	
     Uint64 current_time, previous_time = SDL_GetTicks();
     
-	while (!g_exit_flag.should_exit) {
+	while (true) {
         current_time = SDL_GetTicks();
         g_delta_time = (double)(current_time - previous_time);
         previous_time = current_time;
@@ -35,7 +35,8 @@ int main (void) {
 		SDL_RenderClear(g_renderer);
         
 		handleEvent();
-		
+		if (g_exit_flag.should_exit) break;
+        
 		fillBackground();
 		drawMap(map, map_height, map_width);
 		drawPlayer();
