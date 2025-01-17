@@ -61,6 +61,7 @@ void createWindow(void) {
 	}
     
     return;
+    assert(0); // the code below shouldn't run unless initializing SDL context failed
     
 createWindow_failed_to_create_texture:
     SDL_DestroyTexture(g_texture);

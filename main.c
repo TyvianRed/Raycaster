@@ -32,22 +32,18 @@ int main (void) {
         g_delta_time = (double)(current_time - previous_time);
         previous_time = current_time;
         
-		SDL_RenderClear(g_renderer);
-        
 		handleEvent();
 		if (g_exit_flag.should_exit) break;
         
+		SDL_RenderClear(g_renderer);
 		fillBackground();
 		drawMap(map, map_height, map_width);
 		drawPlayer();
-		
 		performRaycasting();
-		
 		swapBuffersWindow();
 	}
 
 	quitRaycaster();
-    
     unloadTexture();
 
 	return 0;
