@@ -1,9 +1,10 @@
 #include "texture.h"
 
 Uint32* s_texture;
-static size_t texture_width, texture_height;
+size_t texture_width, texture_height, texture_step;
 
 void loadTexture(const char* file_path) {
+    
     // https://github.com/ssloy/tinyraycaster/blob/master/textures.cpp
     SDL_Surface* const p_surface_image = SDL_LoadBMP(file_path);
     if (p_surface_image == NULL) {
@@ -36,6 +37,8 @@ void loadTexture(const char* file_path) {
         exit(EXIT_FAILURE);
     }
     
+    texture_step = texture_height / SCREEN_HEIGHT;
+    
     Uint8* const image = p_surface_converted_image->pixels;
     s_texture = malloc(texture_height * texture_width * sizeof(Uint32));
     for (size_t image_height = 0u; image_height < texture_height; image_height++) {
@@ -59,8 +62,4 @@ void loadTexture(const char* file_path) {
 void unloadTexture(void) {
     free(s_texture);
     fprintf(stderr, "loadTexture(): s_texture freed successfully\n");
-}
-
-Uint32 filterTexture(const double intersected_s, const double intersected_t) {
-    return COLOR_PLAYER_BLACK.bits;
 }

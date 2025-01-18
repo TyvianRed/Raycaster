@@ -1,6 +1,5 @@
 #include "raycast.h"
 
-
 exitflag_t g_exit_flag;
 
 static Uint8 s_position_buffer[SCREEN_BUF_SIZE];
@@ -203,7 +202,7 @@ void getHorizontalVector(double* const p_horz_vec_s, double* const p_horz_vec_t)
 void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column) {
 	// https://lodev.org/cgtutor/raycasting.html
 	// https://www.youtube.com/watch?v=NbSee-XM7WA
-	bool intersected_side; // false for horizontal grid line, true for vertical grid line
+	side_t intersected_side;
 	
 	int step_s = 0, step_t = 0;
 	
@@ -237,11 +236,11 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 		if (dist_s > dist_t) {
 			dist_t += delta_t;
 			player_buf_t += step_t;
-			intersected_side = true;
+			intersected_side = SIDE_VERTICAL;
 		} else {
 			dist_s += delta_s;
 			player_buf_s += step_s;
-			intersected_side = false;
+			intersected_side = SIDE_HORIZONTAL;
 		}
 		
 		s_framebuffer[player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s] = COLOR_RAY_WHITE.bits;
@@ -262,13 +261,15 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
         framebuffer_row = (size_t)missed_column_height;
         framebuffer_bound = SCREEN_HEIGHT - (size_t)missed_column_height;
     }
-    
+
     for (; framebuffer_row < framebuffer_bound; framebuffer_row++) {
-        if (intersected_side) {
-            s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = COLOR_DIMMED_WALL_BLUE.bits;
+        if (intersected_side == SIDE_HORIZONTAL) {
+            s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] =
+                COLOR_DIMMED_WALL_BLUE.bits;
             continue;
         }
-        s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = COLOR_WALL_BLUE.bits;
+        s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = 
+            COLOR_WALL_BLUE.bits;
     }
 	
 }

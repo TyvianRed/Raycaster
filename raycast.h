@@ -29,6 +29,11 @@ enum {
     DUAL_SCREEN_BUF_SIZE = 122880
 };
 
+typedef enum {
+    SIDE_HORIZONTAL = 0,
+    SIDE_VERTICAL
+} side_t;
+
 #define EPSILON (1E-9)
 
 #define SDL_LOG_ERROR_STR(msg) SDL_LogError(SDL_LOG_CATEGORY_ERROR, msg, SDL_GetError())
@@ -59,7 +64,6 @@ typedef union {
 #endif
     } rgba;
 } color_t;
-
 
 static const color_t COLOR_WALL_BLUE = {
     .rgba.r = 0u,
