@@ -21,29 +21,18 @@
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
 
-#define SCREEN_HEIGHT (240u)
-#define SCREEN_WIDTH (256u)
-#define SCREEN_BUF_SIZE (61440u)
-#define DUAL_SCREEN_WIDTH (512u)
-#define DUAL_SCREEN_BUF_SIZE (122880u)
-
-#define COLOR_WALL_BLUE (0x7FFFu)
-#define COLOR_DIMMED_WALL_BLUE (0x3FFFu)
-#define COLOR_RAY_WHITE (0xFFFFFFFFu)
-#define COLOR_PLAYER_BLACK (0xFFu)
+enum {
+    SCREEN_HEIGHT = 240u,
+    SCREEN_WIDTH = 256u,
+    SCREEN_BUF_SIZE = 61440u,
+    DUAL_SCREEN_WIDTH = 512u,
+    DUAL_SCREEN_BUF_SIZE = 122880u
+};
 
 #define EPSILON (1E-9)
 
 #define SDL_LOG_ERROR_STR(msg) SDL_LogError(SDL_LOG_CATEGORY_ERROR, msg, SDL_GetError())
 #define SDL_LOG_ERROR(msg) SDL_LogError(SDL_LOG_CATEGORY_ERROR, msg)
-
-// RGB to bit pattern
-// https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.cpp
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-#define CTOB(r, g, b, a) (a << 24 | b << 16 | g << 8 | r)
-#else
-#define CTOB(r, g, b, a) (r << 24 | g << 16 | b << 8 | a)
-#endif
 
 typedef union {
     Uint8 should_exit;
@@ -52,6 +41,61 @@ typedef union {
         Uint8 is_esc_pressed : 1;
     } flags;
 } exitflag_t;
+
+typedef union {
+    Uint32 bits;
+    struct {
+    // https://github.com/QuantitativeBytes/qbRayTrace/blob/main/Ep1Code/qbRayTrace/qbImage.cpp
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+        Uint8 r;
+        Uint8 g;
+        Uint8 b;
+        Uint8 a;
+#else
+        Uint8 a;
+        Uint8 b;
+        Uint8 g;
+        Uint8 r;
+#endif
+    } rgba;
+} color_t;
+
+
+static const color_t COLOR_WALL_BLUE = {
+    .rgba = {
+        .r = 0u,
+        .g = 0u,
+        .b = 127u,
+        .a = 255u
+    }
+};
+
+static const color_t COLOR_DIMMED_WALL_BLUE = {
+    .rgba = {
+        .r = 0u,
+        .g = 0u,
+        .b = 63u,
+        .a = 255u
+    }
+};
+
+static const color_t COLOR_PLAYER_BLACK = {
+    .rgba = {
+        .r = 0u,
+        .g = 0u,
+        .b = 0u,
+        .a = 0u
+    }
+};
+
+static const color_t COLOR_RAY_WHITE = {
+    .rgba = {
+        .r = 255u,
+        .g = 255u,
+        .b = 255u,
+        .a = 255u
+    }
+};
 
 extern exitflag_t g_exit_flag;
 
@@ -64,10 +108,6 @@ extern SDL_Texture* g_texture;
 void initializeRaycaster(void);
 void createWindow(void);
 void quitRaycaster(void);
-
-void btoc(
-    const Uint32 color, Uint8* const r,  Uint8* const g, Uint8* const b, Uint8* const a
-); // Bit pattern to RGB
 
 void handleEvent(void);
 void detectCollision(const double previous_player_pos_s, const double previous_player_pos_t);

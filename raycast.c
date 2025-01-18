@@ -80,23 +80,6 @@ void quitRaycaster(void) {
 	SDL_Quit();
 }
 
-// bit pattern to RGB
-void btoc(const Uint32 color, Uint8* const r,  Uint8* const g, Uint8* const b, Uint8* const a) {
-	assert(r != NULL && g != NULL && b != NULL && a != NULL);
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    *a = color >> 24;
-    *b = color >> 16 & 255;
-    *g = color >> 8 & 255;
-    *r = color & 255;
-#else
-	*r = color >> 24;
-    *g = color >> 16 & 255;
-    *b = color >> 8 & 255;
-    *a = color & 255;
-#endif
-}
-
-
 void handleEvent(void) {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
@@ -154,10 +137,17 @@ void handleEvent(void) {
 void fillBackground(void) {
 	for (size_t row = 0u; row < SCREEN_HEIGHT; row++) {
 		for (size_t col = 0u; col < SCREEN_WIDTH; col++) {
-            const Uint32 color_pixel = CTOB(row, col, 0u, 255u);
+            const color_t color_pixel = {
+                .rgba = {
+                    .r = row,
+                    .g = col,
+                    .b = 0u,
+                    .a = 255u
+                }
+            };
             const size_t screen_row = row * DUAL_SCREEN_WIDTH;
-			s_framebuffer[screen_row + col] = color_pixel;
-            s_framebuffer[screen_row + col + SCREEN_WIDTH] = color_pixel;
+			s_framebuffer[screen_row + col] = color_pixel.bits;
+            s_framebuffer[screen_row + col + SCREEN_WIDTH] = color_pixel.bits;
         }
     }
 }
@@ -175,7 +165,7 @@ void drawMap(const Uint8* const p_map, const size_t map_height, const size_t map
 			
 			for (size_t dHM = row * inv_map_height * SCREEN_HEIGHT; dHM < vert_end; dHM++) {
 				for (size_t dWM = col * inv_map_width * SCREEN_WIDTH; dWM < horz_end; dWM++) {
-					s_framebuffer[dHM * DUAL_SCREEN_WIDTH + dWM] = COLOR_WALL_BLUE;
+					s_framebuffer[dHM * DUAL_SCREEN_WIDTH + dWM] = COLOR_WALL_BLUE.bits;
 					s_position_buffer[dHM * SCREEN_WIDTH + dWM] = 1u;
 				}
 			}
@@ -188,7 +178,7 @@ void drawPlayer(void) {
 	const size_t player_buf_t = (size_t)floor(s_player_pos_t);
 	const size_t player_location =  player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s;
     
-	s_framebuffer[player_location] = COLOR_PLAYER_BLACK;
+	s_framebuffer[player_location] = COLOR_PLAYER_BLACK.bits;
 }
 
 
@@ -256,7 +246,7 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 			intersected_side = false;
 		}
 		
-		s_framebuffer[player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s] = COLOR_RAY_WHITE;
+		s_framebuffer[player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s] = COLOR_RAY_WHITE.bits;
 		is_wall_intersected = s_position_buffer[player_buf_t * SCREEN_WIDTH + player_buf_s] == 1u;
 	}
     
@@ -277,10 +267,10 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
     
     for (; framebuffer_row < framebuffer_bound; framebuffer_row++) {
         if (intersected_side) {
-            s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = COLOR_DIMMED_WALL_BLUE;
+            s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = COLOR_DIMMED_WALL_BLUE.bits;
             continue;
         }
-        s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = COLOR_WALL_BLUE;
+        s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = COLOR_WALL_BLUE.bits;
     }
 	
 }
