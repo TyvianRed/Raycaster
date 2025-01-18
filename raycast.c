@@ -138,12 +138,10 @@ void fillBackground(void) {
 	for (size_t row = 0u; row < SCREEN_HEIGHT; row++) {
 		for (size_t col = 0u; col < SCREEN_WIDTH; col++) {
             const color_t color_pixel = {
-                .rgba = {
-                    .r = row,
-                    .g = col,
-                    .b = 0u,
-                    .a = 255u
-                }
+                .rgba.r = row,
+                .rgba.g = col,
+                .rgba.b = 0u,
+                .rgba.a = 255u
             };
             const size_t screen_row = row * DUAL_SCREEN_WIDTH;
 			s_framebuffer[screen_row + col] = color_pixel.bits;

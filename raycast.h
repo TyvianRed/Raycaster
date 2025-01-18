@@ -22,11 +22,11 @@
 #include "SDL3/SDL_timer.h"
 
 enum {
-    SCREEN_HEIGHT = 240u,
-    SCREEN_WIDTH = 256u,
-    SCREEN_BUF_SIZE = 61440u,
-    DUAL_SCREEN_WIDTH = 512u,
-    DUAL_SCREEN_BUF_SIZE = 122880u
+    SCREEN_HEIGHT = 240,
+    SCREEN_WIDTH = 256,
+    SCREEN_BUF_SIZE = 61440,
+    DUAL_SCREEN_WIDTH = 512,
+    DUAL_SCREEN_BUF_SIZE = 122880
 };
 
 #define EPSILON (1E-9)
@@ -62,39 +62,31 @@ typedef union {
 
 
 static const color_t COLOR_WALL_BLUE = {
-    .rgba = {
-        .r = 0u,
-        .g = 0u,
-        .b = 127u,
-        .a = 255u
-    }
+    .rgba.r = 0u,
+    .rgba.g = 0u,
+    .rgba.b = 127u,
+    .rgba.a = 255u
 };
 
 static const color_t COLOR_DIMMED_WALL_BLUE = {
-    .rgba = {
-        .r = 0u,
-        .g = 0u,
-        .b = 63u,
-        .a = 255u
-    }
+    .rgba.r = 0u,
+    .rgba.g = 0u,
+    .rgba.b = 63u,
+    .rgba.a = 255u
 };
 
 static const color_t COLOR_PLAYER_BLACK = {
-    .rgba = {
-        .r = 0u,
-        .g = 0u,
-        .b = 0u,
-        .a = 0u
-    }
+    .rgba.r = 0u,
+    .rgba.g = 0u,
+    .rgba.b = 0u,
+    .rgba.a = 0u
 };
 
 static const color_t COLOR_RAY_WHITE = {
-    .rgba = {
-        .r = 255u,
-        .g = 255u,
-        .b = 255u,
-        .a = 255u
-    }
+    .rgba.r = 255u,
+    .rgba.g = 255u,
+    .rgba.b = 255u,
+    .rgba.a = 255u
 };
 
 extern exitflag_t g_exit_flag;
