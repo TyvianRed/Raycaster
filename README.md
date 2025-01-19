@@ -1,5 +1,7 @@
-# Accelerated Ray Tracer
+# Raycaster
+
 https://github.com/user-attachments/assets/fb4bd011-a47f-426e-a032-351dae1e581d
+
 <br/>
 I wrote this simple raycaster following [this tutorial](https://lodev.org/cgtutor/raycasting.html)
 # Build
