@@ -20,3 +20,5 @@ raycaster.exe
 *.exe
 *.exe
 *.exe
+raycaster_info.h
+*.ppm

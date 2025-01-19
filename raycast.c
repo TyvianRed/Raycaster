@@ -6,7 +6,7 @@ static Uint8 s_position_buffer[SCREEN_BUF_SIZE];
 
 static Uint32 s_framebuffer[DUAL_SCREEN_BUF_SIZE];
 
-static double s_player_pos_s, s_player_pos_t;
+double s_player_pos_s, s_player_pos_t;
 static double s_dir_s, s_dir_t;
 static double s_cam_plane_s, s_cam_plane_t;
 
@@ -270,8 +270,8 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
         }
         s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = 
             COLOR_WALL_BLUE.bits;
-    }
-	
+    }   
+    
 }
 
 void performRaycasting(void) {

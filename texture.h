@@ -10,6 +10,10 @@
 
 enum { NUM_TEXTURE = 6 };
 
+extern Uint32* s_texture;
+extern size_t texture_width, texture_height;
+extern size_t individual_texture_width;
+
 // https://github.com/ssloy/tinyraycaster/blob/master/textures.h
 void loadTexture(const char* file_path);
 void unloadTexture(void);

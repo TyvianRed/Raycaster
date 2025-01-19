@@ -22,6 +22,7 @@
 #include "SDL3/SDL_timer.h"
 
 enum {
+    HALF_SCREEN_HEIGHT = 120,
     SCREEN_HEIGHT = 240,
     SCREEN_WIDTH = 256,
     SCREEN_BUF_SIZE = 61440,
@@ -94,6 +95,8 @@ static const color_t COLOR_RAY_WHITE = {
 };
 
 extern exitflag_t g_exit_flag;
+
+extern double s_player_pos_s, s_player_pos_t;
 
 extern double g_delta_time;
 
