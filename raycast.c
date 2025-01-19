@@ -236,11 +236,11 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 		if (dist_s > dist_t) {
 			dist_t += delta_t;
 			player_buf_t += step_t;
-			intersected_side = SIDE_VERTICAL;
+			intersected_side = SIDE_HORIZONTAL;
 		} else {
 			dist_s += delta_s;
 			player_buf_s += step_s;
-			intersected_side = SIDE_HORIZONTAL;
+			intersected_side = SIDE_VERTICAL;
 		}
 		
 		s_framebuffer[player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s] = COLOR_RAY_WHITE.bits;
@@ -248,9 +248,9 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 	}
     
     const double perpendicular_distance =
-        intersected_side ? dist_t - delta_t : dist_s - delta_s;
+        intersected_side == SIDE_HORIZONTAL ? dist_t - delta_t : dist_s - delta_s;
     const size_t intersected_column_height =
-        perpendicular_distance > EPSILON ? SCREEN_HEIGHT * 42 / perpendicular_distance : SCREEN_HEIGHT;
+        perpendicular_distance > EPSILON ? SCREEN_HEIGHT * 42u / perpendicular_distance : SCREEN_HEIGHT;
     
     const signed int missed_column_height = (SCREEN_HEIGHT - intersected_column_height) * 0.5;
     
@@ -261,18 +261,15 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
         framebuffer_row = (size_t)missed_column_height;
         framebuffer_bound = SCREEN_HEIGHT - (size_t)missed_column_height;
     }
-
-    for (; framebuffer_row < framebuffer_bound; framebuffer_row++) {
-        if (intersected_side == SIDE_HORIZONTAL) {
+    
+     for (; framebuffer_row < framebuffer_bound; framebuffer_row++) {
+        if (intersected_side == SIDE_VERTICAL) {
             s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] =
                 COLOR_DIMMED_WALL_BLUE.bits;
             continue;
         }
-        s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = 
-            COLOR_WALL_BLUE.bits;
-        // s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] =
-        //    texture[];
-    }   
+        s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = COLOR_WALL_BLUE.bits;
+    }
     
 }
 

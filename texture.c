@@ -80,5 +80,5 @@ void loadTexture(const char* file_path) {
 
 void unloadTexture(void) {
     free(g_texture_color_buf);
-    fprintf(stderr, "loadTexture(): g_texture freed successfully\n");
+    fprintf(stderr, "loadTexture(): g_texture_color_buf freed successfully\n");
 }

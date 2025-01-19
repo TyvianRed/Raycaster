@@ -12,7 +12,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "texture.h"
+// #include "texture.h"
 
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_init.h"
@@ -118,7 +118,7 @@ void drawPlayer(void);
 void lookAt(const double rotation_direction);
 void getHorizontalVector(double* const p_horz_vec_s, double* const p_horz_vec_t);
 
-void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column);
+void castRay(const double left_ray_dir_s, const double left_ray_dir_t, const size_t column);
 void performRaycasting(void);
 
 void swapBuffersWindow(void);
