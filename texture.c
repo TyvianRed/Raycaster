@@ -1,8 +1,8 @@
 #include "texture.h"
 
-Uint32* s_texture;
-size_t texture_width, texture_height;
-size_t individual_texture_width;
+Uint32* g_texture_color_buf;
+size_t g_texture_width, g_texture_height;
+size_t g_individual_texture_width;
 
 void loadTexture(const char* file_path) {
 
@@ -24,17 +24,17 @@ void loadTexture(const char* file_path) {
         exit(EXIT_FAILURE);
     }
     
-    texture_width = p_surface_converted_image->w;
-    if ((int)(texture_width * 4u) != p_surface_converted_image->pitch) {
+    g_texture_width = p_surface_converted_image->w;
+    if ((int)(g_texture_width * 4u) != p_surface_converted_image->pitch) {
         SDL_LOG_ERROR("loadTexture(): loaded image has invalid pitch\n");
         SDL_DestroySurface(p_surface_converted_image);
         exit(EXIT_FAILURE);
     }
     
-    individual_texture_width = (size_t)ceil(texture_width / NUM_TEXTURE);
+    g_individual_texture_width = (size_t)ceil(g_texture_width / NUM_TEXTURE);
     
-    texture_height = p_surface_converted_image->h;
-    if (texture_width & texture_height) {
+    g_texture_height = p_surface_converted_image->h;
+    if (g_texture_width & g_texture_height) {
         SDL_LOG_ERROR("loadTexture(): individual image isn't square\n");
         SDL_DestroySurface(p_surface_converted_image);
         exit(EXIT_FAILURE);
@@ -47,14 +47,14 @@ void loadTexture(const char* file_path) {
         exit(EXIT_FAILURE);
     }
     // https://raytracing.github.io/books/RayTracingInOneWeekend.html#outputanimage/theppmimageformat
-    fprintf(file_loaded_texture, "P3\n%zu %zu\n255\n", texture_width, texture_height);
+    fprintf(file_loaded_texture, "P3\n%zu %zu\n255\n", g_texture_width, g_texture_height);
     
     Uint8* const image = p_surface_converted_image->pixels;
-    s_texture = malloc(texture_height * texture_width * sizeof(Uint32));
+    g_texture_color_buf = malloc(g_texture_height * g_texture_width * sizeof(Uint32));
     
-    for (size_t image_height = 0u; image_height < texture_height; image_height++) {
-        for (size_t image_width = 0u; image_width < texture_width; image_width++) {
-            const size_t texture_base_index = image_height * texture_width + image_width;
+    for (size_t image_height = 0u; image_height < g_texture_height; image_height++) {
+        for (size_t image_width = 0u; image_width < g_texture_width; image_width++) {
+            const size_t texture_base_index = image_height * g_texture_width + image_width;
             const size_t color_base_index = texture_base_index * sizeof(Uint32);
             const color_t color_texel = {
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
@@ -69,7 +69,7 @@ void loadTexture(const char* file_path) {
                 .rgba.r = image[color_base_index + 3]
 #endif
             };
-            s_texture[texture_base_index] = color_texel.bits;
+            g_texture_color_buf[texture_base_index] = color_texel.bits;
             fprintf(file_loaded_texture, "%u %u %u\n", color_texel.rgba.r, color_texel.rgba.g, color_texel.rgba.b);
         }
     }
@@ -79,6 +79,6 @@ void loadTexture(const char* file_path) {
 }
 
 void unloadTexture(void) {
-    free(s_texture);
-    fprintf(stderr, "loadTexture(): s_texture freed successfully\n");
+    free(g_texture_color_buf);
+    fprintf(stderr, "loadTexture(): g_texture freed successfully\n");
 }

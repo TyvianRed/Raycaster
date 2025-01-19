@@ -6,7 +6,7 @@ static Uint8 s_position_buffer[SCREEN_BUF_SIZE];
 
 static Uint32 s_framebuffer[DUAL_SCREEN_BUF_SIZE];
 
-double s_player_pos_s, s_player_pos_t;
+double g_player_pos_s, g_player_pos_t;
 static double s_dir_s, s_dir_t;
 static double s_cam_plane_s, s_cam_plane_t;
 
@@ -19,8 +19,8 @@ SDL_Renderer* g_renderer;
 SDL_Texture* g_texture;
 
 void initializeRaycaster(void) {
-    s_player_pos_s = 20.;
-    s_player_pos_t = 25.;
+    g_player_pos_s = 20.;
+    g_player_pos_t = 25.;
     s_dir_s = 1.;
     s_cam_plane_t = 0.3;
     s_dir_t = s_cam_plane_s = 0.;
@@ -105,30 +105,30 @@ void handleEvent(void) {
                 continue;
             }   
         
-            const double previous_player_pos_s = s_player_pos_s;
-            const double previous_player_pos_t = s_player_pos_t;
+            const double previoug_player_pos_s = g_player_pos_s;
+            const double previoug_player_pos_t = g_player_pos_t;
         
             if (event.key.key == SDLK_W) {
-                s_player_pos_s += s_dir_s * g_delta_time;
-                s_player_pos_t += s_dir_t * g_delta_time;
+                g_player_pos_s += s_dir_s * g_delta_time;
+                g_player_pos_t += s_dir_t * g_delta_time;
             } else if (event.key.key == SDLK_S) {
-                s_player_pos_s -= s_dir_s * g_delta_time;
-				s_player_pos_t -= s_dir_t * g_delta_time;
+                g_player_pos_s -= s_dir_s * g_delta_time;
+				g_player_pos_t -= s_dir_t * g_delta_time;
             } else if (event.key.key == SDLK_A) {
                 double horz_vec_s, horz_vec_t;
 				getHorizontalVector(&horz_vec_s, &horz_vec_t);
                 
-				s_player_pos_s += horz_vec_s * g_delta_time;
-				s_player_pos_t += horz_vec_t * g_delta_time;
+				g_player_pos_s += horz_vec_s * g_delta_time;
+				g_player_pos_t += horz_vec_t * g_delta_time;
             } else if (event.key.key == SDLK_D) {
                 double horz_vec_s, horz_vec_t; 
 				getHorizontalVector(&horz_vec_s, &horz_vec_t);
                 
-				s_player_pos_s -= horz_vec_s * g_delta_time;
-				s_player_pos_t -= horz_vec_t * g_delta_time;
+				g_player_pos_s -= horz_vec_s * g_delta_time;
+				g_player_pos_t -= horz_vec_t * g_delta_time;
             }
 			
-            detectCollision(previous_player_pos_s, previous_player_pos_t); 
+            detectCollision(previoug_player_pos_s, previoug_player_pos_t); 
 		}
 	}
 }
@@ -171,8 +171,8 @@ void drawMap(const Uint8* const p_map, const size_t map_height, const size_t map
 }
 
 void drawPlayer(void) {
-	const size_t player_buf_s = (size_t)floor(s_player_pos_s);
-	const size_t player_buf_t = (size_t)floor(s_player_pos_t);
+	const size_t player_buf_s = (size_t)floor(g_player_pos_s);
+	const size_t player_buf_t = (size_t)floor(g_player_pos_t);
 	const size_t player_location =  player_buf_t * DUAL_SCREEN_WIDTH + player_buf_s;
     
 	s_framebuffer[player_location] = COLOR_PLAYER_BLACK.bits;
@@ -206,8 +206,8 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 	
 	int step_s = 0, step_t = 0;
 	
-	size_t player_buf_s = (size_t)floor(s_player_pos_s);
-	size_t player_buf_t = (size_t)floor(s_player_pos_t);
+	size_t player_buf_s = (size_t)floor(g_player_pos_s);
+	size_t player_buf_t = (size_t)floor(g_player_pos_t);
     
 	bool is_wall_intersected = s_position_buffer[player_buf_t * SCREEN_WIDTH + player_buf_s] == 1u;
     
@@ -217,18 +217,18 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
 	double dist_s = 0., dist_t = 0.;
     
 	if (ray_dir_s > 0.) {
-		dist_s = (1.0 - s_player_pos_s + (double)player_buf_s) * delta_s; 
+		dist_s = (1.0 - g_player_pos_s + (double)player_buf_s) * delta_s; 
 		step_s = 1;
 	} else {
-		dist_s = (s_player_pos_s - (double)player_buf_s) * delta_s;
+		dist_s = (g_player_pos_s - (double)player_buf_s) * delta_s;
 		step_s = -1;
 	}
 	
 	if (ray_dir_t > 0.) {
-		dist_t = (1.0 - s_player_pos_t + (double)player_buf_t) * delta_t; 
+		dist_t = (1.0 - g_player_pos_t + (double)player_buf_t) * delta_t; 
 		step_t = 1;
 	} else {
-		dist_t = (s_player_pos_t - (double)player_buf_t) * delta_t; 
+		dist_t = (g_player_pos_t - (double)player_buf_t) * delta_t; 
 		step_t = -1;
 	}
 
@@ -270,6 +270,8 @@ void castRay(const double ray_dir_s, const double ray_dir_t, const size_t column
         }
         s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] = 
             COLOR_WALL_BLUE.bits;
+        // s_framebuffer[framebuffer_row * DUAL_SCREEN_WIDTH + SCREEN_WIDTH + column] =
+        //    texture[];
     }   
     
 }
@@ -307,15 +309,15 @@ void swapBuffersWindow(void) {
 	SDL_RenderPresent(g_renderer);
 }
 
-void detectCollision(const double previous_player_pos_s, const double previous_player_pos_t) {
-    size_t player_buf_s = (size_t)floor(s_player_pos_s);
-    size_t player_buf_t = (size_t)floor(previous_player_pos_t);
+void detectCollision(const double previoug_player_pos_s, const double previoug_player_pos_t) {
+    size_t player_buf_s = (size_t)floor(g_player_pos_s);
+    size_t player_buf_t = (size_t)floor(previoug_player_pos_t);
 
     if (s_position_buffer[player_buf_t * SCREEN_WIDTH + player_buf_s] == 1u)
-        s_player_pos_s = previous_player_pos_s;
+        g_player_pos_s = previoug_player_pos_s;
     
-    player_buf_t = (size_t)floor(s_player_pos_t);
+    player_buf_t = (size_t)floor(g_player_pos_t);
     
     if (s_position_buffer[player_buf_t * SCREEN_WIDTH + player_buf_s] == 1u)
-        s_player_pos_t = previous_player_pos_t;
+        g_player_pos_t = previoug_player_pos_t;
 }
