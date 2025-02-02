@@ -10,9 +10,11 @@ Makefile is included.
 
 # External dependencies
 - [SDL3](https://github.com/libsdl-org/SDL/releases/tag/preview-3.1.3) for window creation
+- [walltext.bmp from tinyraycastwr](https://github.com/ssloy/tinyraycaster/blob/master/walltext.bmp)
 
 # Some cool resources I consulted for this project
 - [Lode's Computer Graphics Tutorial](https://lodev.org/cgtutor/raycasting.html)
 - [Super Fast Ray Casting in Tiled Worlds using DDA](https://www.youtube.com/watch?v=NbSee-XM7WA)
 - [Ray tracing from scratch \[C++ & SDL2\]](https://www.youtube.com/playlist?list=PL3WoIG-PLjSt54LvzY2SuBQDl-cXa11Tm)
+- [tinyraycaster](https://github.com/ssloy/tinyraycaster/tree/master)
 - [SDL3 Wiki](https://wiki.libsdl.org/SDL3/FrontPage)
