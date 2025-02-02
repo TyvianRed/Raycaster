@@ -10,7 +10,7 @@ Makefile is included.
 
 # External dependencies
 - [SDL3](https://github.com/libsdl-org/SDL/releases/tag/preview-3.1.3) for window creation
-- [walltext.bmp from tinyraycastwr](https://github.com/ssloy/tinyraycaster/blob/master/walltext.bmp)
+- [walltext.bmp from tinyraycaster](https://github.com/ssloy/tinyraycaster/blob/master/walltext.bmp) for texture
 
 # Some cool resources I consulted for this project
 - [Lode's Computer Graphics Tutorial](https://lodev.org/cgtutor/raycasting.html)
